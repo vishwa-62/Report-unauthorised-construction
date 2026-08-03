@@ -4,6 +4,6 @@ import react from '@vitejs/plugin-react'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: process.env.GITHUB_PAGES === 'true' || process.env.NODE_ENV === 'production' ? '/Report-unauthorised-construction/' : '/',
+  base: process.env.GITHUB_PAGES === 'true' ? '/Report-unauthorised-construction/' : '/',
 })
 

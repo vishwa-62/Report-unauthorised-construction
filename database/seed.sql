@@ -37,18 +37,18 @@ INSERT INTO wards (name, code, zone_id) VALUES
 ON CONFLICT (zone_id, code) DO NOTHING;
 
 -- 4. Insert Users
--- Password BCrypt Hash for 'password123' is '$2a$10$.qnrSLC/QQbaulj8SKVJtOLaslCl4OtrFYql3RRb1vsUQ/H/QDj0y'
+-- Password BCrypt Hash for 'password123' is '$2a$10$UNm.lbUav1TFoEQ/w/mxju1Es1uLMzkSrqRXwHRiKHCGizdjYvtHW'
 INSERT INTO users (email, password_hash, full_name, phone_number, role, is_active, email_verified) VALUES
-('admin@cityguard.gov', '$2a$10$.qnrSLC/QQbaulj8SKVJtOLaslCl4OtrFYql3RRb1vsUQ/H/QDj0y', 'Commissioner Rajesh Kumar', '+91 98765 43210', 'admin', TRUE, TRUE),
-('admin2@cityguard.gov', '$2a$10$.qnrSLC/QQbaulj8SKVJtOLaslCl4OtrFYql3RRb1vsUQ/H/QDj0y', 'DC Sandeep Patil', '+91 98765 43219', 'admin', TRUE, TRUE),
-('engineer@cityguard.gov', '$2a$10$.qnrSLC/QQbaulj8SKVJtOLaslCl4OtrFYql3RRb1vsUQ/H/QDj0y', 'Chief Engineer Anjali Sharma', '+91 98765 43211', 'engineer', TRUE, TRUE),
-('officer1@cityguard.gov', '$2a$10$.qnrSLC/QQbaulj8SKVJtOLaslCl4OtrFYql3RRb1vsUQ/H/QDj0y', 'Inspector Vikram Singh', '+91 98765 43212', 'officer', TRUE, TRUE),
-('officer2@cityguard.gov', '$2a$10$.qnrSLC/QQbaulj8SKVJtOLaslCl4OtrFYql3RRb1vsUQ/H/QDj0y', 'Inspector Sunita Rao', '+91 98765 43213', 'officer', TRUE, TRUE),
-('officer3@cityguard.gov', '$2a$10$.qnrSLC/QQbaulj8SKVJtOLaslCl4OtrFYql3RRb1vsUQ/H/QDj0y', 'Inspector David Dsouza', '+91 98765 43214', 'officer', TRUE, TRUE),
-('officer4@cityguard.gov', '$2a$10$.qnrSLC/QQbaulj8SKVJtOLaslCl4OtrFYql3RRb1vsUQ/H/QDj0y', 'Inspector Rajesh Sawant', '+91 98765 43215', 'officer', TRUE, TRUE),
-('citizen1@cityguard.gov', '$2a$10$.qnrSLC/QQbaulj8SKVJtOLaslCl4OtrFYql3RRb1vsUQ/H/QDj0y', 'Amit Patel', '+91 91111 22222', 'citizen', TRUE, TRUE),
-('citizen2@cityguard.gov', '$2a$10$.qnrSLC/QQbaulj8SKVJtOLaslCl4OtrFYql3RRb1vsUQ/H/QDj0y', 'Priya Deshmukh', '+91 93333 44444', 'citizen', TRUE, TRUE),
-('citizen3@cityguard.gov', '$2a$10$.qnrSLC/QQbaulj8SKVJtOLaslCl4OtrFYql3RRb1vsUQ/H/QDj0y', 'John Doe', '+91 95555 66666', 'citizen', TRUE, TRUE)
+('admin@cityguard.gov', '$2a$10$UNm.lbUav1TFoEQ/w/mxju1Es1uLMzkSrqRXwHRiKHCGizdjYvtHW', 'Commissioner Rajesh Kumar', '+91 98765 43210', 'admin', TRUE, TRUE),
+('admin2@cityguard.gov', '$2a$10$UNm.lbUav1TFoEQ/w/mxju1Es1uLMzkSrqRXwHRiKHCGizdjYvtHW', 'DC Sandeep Patil', '+91 98765 43219', 'admin', TRUE, TRUE),
+('engineer@cityguard.gov', '$2a$10$UNm.lbUav1TFoEQ/w/mxju1Es1uLMzkSrqRXwHRiKHCGizdjYvtHW', 'Chief Engineer Anjali Sharma', '+91 98765 43211', 'engineer', TRUE, TRUE),
+('officer1@cityguard.gov', '$2a$10$UNm.lbUav1TFoEQ/w/mxju1Es1uLMzkSrqRXwHRiKHCGizdjYvtHW', 'Inspector Vikram Singh', '+91 98765 43212', 'officer', TRUE, TRUE),
+('officer2@cityguard.gov', '$2a$10$UNm.lbUav1TFoEQ/w/mxju1Es1uLMzkSrqRXwHRiKHCGizdjYvtHW', 'Inspector Sunita Rao', '+91 98765 43213', 'officer', TRUE, TRUE),
+('officer3@cityguard.gov', '$2a$10$UNm.lbUav1TFoEQ/w/mxju1Es1uLMzkSrqRXwHRiKHCGizdjYvtHW', 'Inspector David Dsouza', '+91 98765 43214', 'officer', TRUE, TRUE),
+('officer4@cityguard.gov', '$2a$10$UNm.lbUav1TFoEQ/w/mxju1Es1uLMzkSrqRXwHRiKHCGizdjYvtHW', 'Inspector Rajesh Sawant', '+91 98765 43215', 'officer', TRUE, TRUE),
+('citizen1@cityguard.gov', '$2a$10$UNm.lbUav1TFoEQ/w/mxju1Es1uLMzkSrqRXwHRiKHCGizdjYvtHW', 'Amit Patel', '+91 91111 22222', 'citizen', TRUE, TRUE),
+('citizen2@cityguard.gov', '$2a$10$UNm.lbUav1TFoEQ/w/mxju1Es1uLMzkSrqRXwHRiKHCGizdjYvtHW', 'Priya Deshmukh', '+91 93333 44444', 'citizen', TRUE, TRUE),
+('citizen3@cityguard.gov', '$2a$10$UNm.lbUav1TFoEQ/w/mxju1Es1uLMzkSrqRXwHRiKHCGizdjYvtHW', 'John Doe', '+91 95555 66666', 'citizen', TRUE, TRUE)
 ON CONFLICT (email) DO NOTHING;
 
 -- 5. Insert Officers details (referencing users table ids)
