@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Production & Build outputs
+dist/
+**/dist/
+build/
+**/build/
+
+# Environment & Sensitive files
+.env
+**/.env
+*.env.local
+
+# Database files & logs
+*.db
+*.sqlite
+*.sqlite3
+**/cityguard.db
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Operating System / IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
