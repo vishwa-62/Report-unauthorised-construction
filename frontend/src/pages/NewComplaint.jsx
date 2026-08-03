@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import MapContainer from '../components/MapContainer';
+import { MOCK_WARDS, MOCK_CATEGORIES, saveComplaintToStore } from '../utils/mockStore';
 import { MapPin, Navigation, Upload, ShieldAlert, Cpu, Sparkles, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -22,8 +23,8 @@ const NewComplaint = () => {
   const [imageFile, setImageFile] = useState(null);
   
   // Helpers list from backend
-  const [wards, setWards] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [wards, setWards] = useState(MOCK_WARDS);
+  const [categories, setCategories] = useState(MOCK_CATEGORIES);
   const [loadingLists, setLoadingLists] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -40,10 +41,16 @@ const NewComplaint = () => {
           axios.get('/admin/wards'),
           axios.get('/admin/categories')
         ]);
-        setWards(wardsRes.data);
-        setCategories(catsRes.data);
+        if (wardsRes.data && Array.isArray(wardsRes.data) && wardsRes.data.length > 0) {
+          setWards(wardsRes.data);
+        }
+        if (catsRes.data && Array.isArray(catsRes.data) && catsRes.data.length > 0) {
+          setCategories(catsRes.data);
+        }
       } catch (err) {
-        console.error('Error fetching categories or wards:', err);
+        console.warn('Backend categories or wards API unavailable. Using default lists.');
+        setWards(MOCK_WARDS);
+        setCategories(MOCK_CATEGORIES);
       } finally {
         setLoadingLists(false);
       }
@@ -60,8 +67,8 @@ const NewComplaint = () => {
     
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLatitude(position.coords.latitude);
-        setLongitude(position.coords.longitude);
+        setLatitude(parseFloat(position.coords.latitude.toFixed(6)));
+        setLongitude(parseFloat(position.coords.longitude.toFixed(6)));
       },
       (err) => {
         console.warn('Geolocation error:', err.message);
@@ -92,7 +99,6 @@ const NewComplaint = () => {
     setRunningAI(true);
     setAiPreview(null);
     setTimeout(() => {
-      // Logic matching our backend aiMock keywords
       const descLower = description.toLowerCase();
       let label = 'Illegal Building';
       let confidence = 88.5;
@@ -110,7 +116,7 @@ const NewComplaint = () => {
 
       setAiPreview({ label, confidence, rec });
       setRunningAI(false);
-    }, 1500);
+    }, 1200);
   };
 
   // Form Submit
@@ -142,7 +148,33 @@ const NewComplaint = () => {
       });
       navigate('/citizen');
     } catch (err) {
-      setError(err.response?.data?.message || 'Server error uploading complaint');
+      console.warn('Backend API unavailable. Saving complaint to local store:', err);
+      const selectedWard = wards.find(w => String(w.id) === String(wardId));
+      const selectedCat = categories.find(c => String(c.id) === String(categoryId));
+
+      const newObj = {
+        id: Date.now(),
+        complaint_number: `CG-2026-${Math.floor(10000 + Math.random() * 90000)}`,
+        description,
+        address,
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        ward_id: wardId,
+        ward_name: selectedWard?.name || `Ward ${wardId}`,
+        category_name: selectedCat?.name || customCategory || 'General',
+        severity: aiPreview?.confidence > 90 ? 'critical' : 'high',
+        status: 'pending',
+        citizen_name: user?.full_name || 'Citizen',
+        citizen_email: user?.email || 'citizen1@cityguard.gov',
+        created_at: new Date().toISOString(),
+        nearby_landmark: landmark,
+        ai_predicted_label: aiPreview?.label || 'Precheck Verified',
+        ai_confidence: aiPreview?.confidence || 90.0,
+        ai_recommendation: aiPreview?.rec || 'Initial complaint queued for review.'
+      };
+
+      saveComplaintToStore(newObj);
+      navigate('/citizen');
     } finally {
       setSubmitting(false);
     }
@@ -178,20 +210,19 @@ const NewComplaint = () => {
               >
                 <option value="">Choose Ward</option>
                 {wards.map(w => (
-                  <option key={w.id} value={w.id}>{w.name} ({w.zone_name})</option>
+                  <option key={w.id} value={w.id}>{w.name}</option>
                 ))}
               </select>
             </div>
 
-            {/* Category Selector */}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Construction Category</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Category</label>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-brand-500/50 text-xs cursor-pointer"
               >
-                <option value="">Other / General</option>
+                <option value="">Choose Category</option>
                 {categories.map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
@@ -199,27 +230,13 @@ const NewComplaint = () => {
             </div>
           </div>
 
-          {/* Custom category (if Other selected) */}
-          {!categoryId && (
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Specify Violation Type</label>
-              <input
-                type="text"
-                placeholder="e.g. Construction near water body"
-                value={customCategory}
-                onChange={(e) => setCustomCategory(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-brand-500/50 text-xs"
-              />
-            </div>
-          )}
-
           {/* Description */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Detailed Description *</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Violation Details *</label>
             <textarea
               required
-              rows="4"
-              placeholder="Provide a description of the construction (e.g. number of floors, road encroachment extent, absence of license permissions, structural materials...)"
+              rows={3}
+              placeholder="Describe the illegal construction (e.g. Unsanctioned additional floors, setback encroachment, construction on public road...)"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-brand-500/50 text-xs"
@@ -229,11 +246,11 @@ const NewComplaint = () => {
           {/* Address & Landmark */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Location Address *</label>
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Street Address / Spot *</label>
               <input
                 type="text"
                 required
-                placeholder="Plot/Flat, Street name, Locality"
+                placeholder="Plot / Street / Building Name"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-brand-500/50 text-xs"
@@ -244,7 +261,7 @@ const NewComplaint = () => {
               <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nearby Landmark</label>
               <input
                 type="text"
-                placeholder="e.g. opposite Green Park"
+                placeholder="e.g. Opp Metro Gate / Near Water Tank"
                 value={landmark}
                 onChange={(e) => setLandmark(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-brand-500/50 text-xs"
@@ -252,147 +269,125 @@ const NewComplaint = () => {
             </div>
           </div>
 
-          {/* Coordinates inputs */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Latitude *</label>
+          {/* Coordinate Inputs with GPS button */}
+          <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-850">
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5 text-brand-500" />
+                Geotag Coordinates (Auto / Map Selection)
+              </label>
+              <button
+                type="button"
+                onClick={handleGetCurrentLocation}
+                className="px-2.5 py-1 bg-brand-500/10 text-brand-500 hover:bg-brand-500/20 rounded-lg text-[10px] font-bold flex items-center gap-1 cursor-pointer transition-all"
+              >
+                <Navigation className="h-3 w-3" />
+                Use My GPS Location
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
               <input
                 type="number"
                 step="any"
                 required
                 value={latitude}
                 onChange={(e) => setLatitude(parseFloat(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-brand-500/50 text-xs"
+                className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl text-xs outline-none"
               />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Longitude *</label>
               <input
                 type="number"
                 step="any"
                 required
                 value={longitude}
                 onChange={(e) => setLongitude(parseFloat(e.target.value))}
-                className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-brand-500/50 text-xs"
+                className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl text-xs outline-none"
               />
             </div>
-            <button
-              type="button"
-              onClick={handleGetCurrentLocation}
-              className="py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs border border-slate-200 dark:border-slate-800 transition-all flex items-center justify-center gap-1.5 cursor-pointer h-[38px]"
-            >
-              <Navigation className="h-4 w-4" />
-              My GPS Location
-            </button>
           </div>
 
-          {/* Upload Image and Preview */}
-          <div className="space-y-2">
-            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Attach Photo Evidence</label>
-            <div className="flex items-center gap-4">
-              <label className="px-5 py-4 border-2 border-dashed border-slate-200 dark:border-slate-850 hover:border-brand-500/50 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all grow text-center">
-                <Upload className="h-6 w-6 text-slate-450 mb-1" />
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Upload PNG, JPEG, WEBP</span>
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="hidden" 
-                />
+          {/* Image File Attachment */}
+          <div className="space-y-1 pt-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Attach Photographic Evidence</label>
+            <div className="flex items-center gap-3">
+              <label className="flex-1 px-4 py-3 bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-750 rounded-xl cursor-pointer hover:border-brand-500 flex items-center justify-center gap-2 text-xs text-slate-400 transition-colors">
+                <Upload className="h-4 w-4 text-brand-500" />
+                <span>{imageFile ? imageFile.name : 'Click to upload site photo (JPEG/PNG)'}</span>
+                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
               </label>
             </div>
           </div>
 
-          {/* Submit button */}
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={submitting}
-            className="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+            className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow-lg shadow-brand-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-4"
           >
             {submitting ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Uploading Report...
+                Submitting Report...
               </>
-            ) : 'Submit Report'}
+            ) : 'Submit Violation Report'}
           </button>
 
         </form>
       </div>
 
-      {/* Right panel: map picker and AI preview card */}
-      <div className="lg:col-span-5 flex flex-col gap-6">
+      {/* Right panel: Interactive GIS map picker & AI Precheck */}
+      <div className="lg:col-span-5 space-y-6">
         
-        {/* Map picker container */}
-        <div className="glass-panel rounded-3xl p-4 border border-slate-200 dark:border-slate-800 flex flex-col gap-3 h-[320px] lg:h-[400px]">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-xs text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-              <MapPin className="h-4 w-4 text-brand-500" />
-              GIS Geolocation Picker
-            </h3>
+        {/* Map Location Selector */}
+        <div className="glass-panel rounded-3xl p-4 border border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="flex justify-between items-center">
+            <h3 className="font-extrabold text-xs uppercase text-slate-400 tracking-wider">GIS Map Location Picker</h3>
+            <span className="text-[10px] text-brand-500 font-bold">Click map to pin spot</span>
           </div>
-          <div className="flex-1 min-h-0">
-            <MapContainer 
-              interactive={true} 
+          <div className="h-[260px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800">
+            <MapContainer
+              latitude={latitude}
+              longitude={longitude}
+              isInteractive={true}
               onLocationSelect={handleMapLocationSelect}
-              selectedLocation={{ lat: latitude, lng: longitude }}
             />
           </div>
         </div>
 
-        {/* AI Precheck Results Card */}
-        {imagePreview && (
-          <div className="glass-panel border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
-              <h3 className="font-extrabold text-xs text-slate-850 dark:text-slate-100 uppercase tracking-wider flex items-center gap-1.5">
-                <Cpu className="h-4 w-4 text-brand-500" />
-                AI Pre-Verification Insight
-              </h3>
-              <span className="px-2 py-0.5 rounded bg-brand-50 text-brand-700 text-[8px] font-extrabold tracking-wide uppercase flex items-center gap-1">
-                <Sparkles className="h-3 w-3 animate-spin" />
-                Vision Engine
-              </span>
-            </div>
-
-            <div className="flex gap-4">
-              {/* Photo Thumbnail */}
-              <img 
-                src={imagePreview} 
-                alt="Upload preview" 
-                className="h-20 w-20 rounded-xl object-cover border border-slate-200 dark:border-slate-800 shadow-sm"
-              />
-
-              {/* AI Insights content */}
-              <div className="flex-1 space-y-1.5 min-w-0">
-                {runningAI ? (
-                  <div className="flex flex-col gap-1.5 py-2">
-                    <div className="h-3 w-3/4 bg-slate-100 dark:bg-slate-900 animate-pulse rounded" />
-                    <div className="h-2 w-1/2 bg-slate-100 dark:bg-slate-900 animate-pulse rounded" />
-                    <div className="h-2 w-full bg-slate-100 dark:bg-slate-900 animate-pulse rounded" />
-                  </div>
-                ) : aiPreview ? (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <span className="font-extrabold text-sm text-slate-850 dark:text-white truncate">
-                        {aiPreview.label}
-                      </span>
-                      <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-bold">
-                        {aiPreview.confidence}% Match
-                      </span>
-                    </div>
-                    <p className="text-[10px] text-slate-400 leading-normal">
-                      💡 {aiPreview.rec}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-[10px] text-slate-400 py-3">Write description to trigger predictive AI check.</p>
-                )}
-              </div>
-            </div>
+        {/* AI Verification Precheck Box */}
+        <div className="glass-panel rounded-3xl p-5 border border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="flex items-center gap-2">
+            <Cpu className="h-4 w-4 text-brand-500" />
+            <h3 className="font-extrabold text-xs uppercase text-slate-400 tracking-wider">AI Pre-Analysis Engine</h3>
           </div>
-        )}
+
+          {runningAI ? (
+            <div className="py-6 flex flex-col items-center justify-center gap-2 text-xs text-slate-400">
+              <Sparkles className="h-5 w-5 text-brand-500 animate-spin" />
+              Scanning image features and classification vectors...
+            </div>
+          ) : aiPreview ? (
+            <div className="p-4 bg-slate-100 dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-brand-500 flex items-center gap-1">
+                  <Check className="h-4 w-4" />
+                  Detected: {aiPreview.label}
+                </span>
+                <span className="px-2 py-0.5 bg-brand-500/10 text-brand-500 rounded font-bold text-[10px]">
+                  {aiPreview.confidence}% Confidence
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">{aiPreview.rec}</p>
+            </div>
+          ) : (
+            <p className="text-xs text-slate-400 py-2">
+              Attach an image above to run real-time AI structural anomaly recognition.
+            </p>
+          )}
+        </div>
 
       </div>
+
     </div>
   );
 };

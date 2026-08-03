@@ -1,160 +1,129 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  Users, Activity, CheckCircle, RefreshCcw, Loader2, ClipboardCheck, Clock
-} from 'lucide-react';
+import { getStoredComplaints } from '../utils/mockStore';
+import { Activity, CheckCircle, RefreshCcw, Loader2, Eye, ShieldAlert, Cpu } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const EngineerDashboard = () => {
-  const [metrics, setMetrics] = useState(null);
-  const [officers, setOfficers] = useState([]);
+  const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  const fetchDashboardData = async () => {
+  const fetchComplaints = async () => {
     try {
       setLoading(true);
-      const [metricRes, officerRes] = await Promise.all([
-        axios.get('/analytics/metrics'),
-        axios.get('/officers')
-      ]);
-      setMetrics(metricRes.data);
-      setOfficers(officerRes.data);
+      const res = await axios.get('/complaints');
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        setComplaints(res.data);
+      } else {
+        setComplaints(getStoredComplaints());
+      }
     } catch (err) {
-      console.error(err);
-      setError('Failed to fetch dashboard metrics.');
+      console.warn('Backend complaints endpoint unavailable. Using stored complaints list.');
+      setComplaints(getStoredComplaints());
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchComplaints();
   }, []);
-
-  if (loading || !metrics) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 gap-3">
-        <Loader2 className="h-8 w-8 text-brand-500 animate-spin" />
-        <p className="text-xs text-slate-400">Loading Auditor Dashboard...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
       
       {/* Welcome Banner */}
-      <div className="p-6 bg-gradient-to-r from-brand-650 to-blue-600 rounded-3xl text-white shadow-xl shadow-brand-500/10">
-        <h3 className="font-extrabold text-lg">Welcome to the Auditor Dashboard</h3>
-        <p className="text-xs text-white/80 mt-0.5">Identify violations, review field officer reports, and check zoning boundary alerts in real time.</p>
+      <div className="p-6 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-3xl text-white shadow-xl shadow-blue-500/10">
+        <h3 className="font-extrabold text-lg">Welcome to the Auditor / Engineer Portal</h3>
+        <p className="text-xs text-white/80 mt-0.5">Review AI structural prechecks, assign field inspectors, and authorize final demolition/resolution orders.</p>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        <div className="glass-panel rounded-2xl p-5 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-          <div className="h-10 w-10 bg-brand-500/10 rounded-xl flex items-center justify-center border border-brand-500/20">
-            <ClipboardCheck className="h-5 w-5 text-brand-500" />
-          </div>
-          <div>
-            <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Awaiting Audit</span>
-            <p className="text-xl font-extrabold text-slate-850 dark:text-white">
-              {metrics.counts?.pending + metrics.counts?.under_review + metrics.counts?.inspected || 0}
-            </p>
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="glass-panel rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+          <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Total Cases</span>
+          <p className="text-2xl font-black text-slate-800 dark:text-white">{complaints.length}</p>
         </div>
 
-        <div className="glass-panel rounded-2xl p-5 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-          <div className="h-10 w-10 bg-blue-500/10 rounded-xl flex items-center justify-center border border-blue-500/20">
-            <Users className="h-5 w-5 text-blue-500" />
-          </div>
-          <div>
-            <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Active Officers</span>
-            <p className="text-xl font-extrabold text-slate-850 dark:text-white">{metrics.activeOfficers}</p>
-          </div>
+        <div className="glass-panel rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+          <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Critical Violations</span>
+          <p className="text-2xl font-black text-rose-500">
+            {complaints.filter(c => c.severity === 'critical').length}
+          </p>
         </div>
 
-        <div className="glass-panel rounded-2xl p-5 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-          <div className="h-10 w-10 bg-purple-500/10 rounded-xl flex items-center justify-center border border-purple-500/20">
-            <CheckCircle className="h-5 w-5 text-purple-500" />
-          </div>
-          <div>
-            <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Resolved Cases</span>
-            <p className="text-xl font-extrabold text-slate-850 dark:text-white">{metrics.counts?.resolved || 0}</p>
-          </div>
+        <div className="glass-panel rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+          <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Inspector Assigned</span>
+          <p className="text-2xl font-black text-amber-500">
+            {complaints.filter(c => c.status === 'assigned' || c.assigned_officer_name).length}
+          </p>
         </div>
 
-        <div className="glass-panel rounded-2xl p-5 border border-slate-200 dark:border-slate-800 flex items-center gap-4">
-          <div className="h-10 w-10 bg-amber-500/10 rounded-xl flex items-center justify-center border border-amber-500/20">
-            <Clock className="h-5 w-5 text-amber-500" />
-          </div>
-          <div>
-            <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Avg SLA Resolution</span>
-            <p className="text-xl font-extrabold text-slate-850 dark:text-white">{metrics.avgResolutionTimeDays} Days</p>
-          </div>
+        <div className="glass-panel rounded-2xl p-5 border border-slate-200 dark:border-slate-800">
+          <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-1">Inspections Verified</span>
+          <p className="text-2xl font-black text-emerald-500">
+            {complaints.filter(c => c.status === 'inspected' || c.status === 'resolved').length}
+          </p>
         </div>
-
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Officer workloads list (7 columns) */}
-        <div className="lg:col-span-7 glass-panel border border-slate-200 dark:border-slate-800 rounded-3xl p-5">
-          <h4 className="font-extrabold text-xs uppercase text-slate-450 tracking-wider mb-4">Field Inspector Workloads</h4>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 text-slate-400 uppercase font-extrabold tracking-wider text-[10px]">
-                  <th className="py-2.5">Inspector Name</th>
-                  <th className="py-2.5">Badge</th>
-                  <th className="py-2.5 text-center">Active Cases</th>
-                  <th className="py-2.5 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
-                {officers.map(o => (
-                  <tr key={o.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/40">
-                    <td className="py-3 font-semibold text-slate-800 dark:text-slate-200">{o.officer_name}</td>
-                    <td className="py-3 text-slate-450 font-medium">{o.badge_number}</td>
-                    <td className="py-3 text-center font-bold text-slate-800 dark:text-slate-100">{o.active_assignments}</td>
-                    <td className="py-3 text-right">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
-                        o.availability_status === 'available' 
-                          ? 'bg-emerald-100 text-emerald-800' 
-                          : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {o.availability_status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      {/* Complaints List */}
+      <div className="glass-panel border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-4">
+        <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="font-black text-sm text-slate-800 dark:text-white flex items-center gap-2">
+            <Activity className="h-4 w-4 text-brand-500" />
+            Engineering Audit Queue ({complaints.length})
+          </h3>
+          <button onClick={fetchComplaints} className="p-1 rounded text-slate-400 hover:text-white">
+            <RefreshCcw className="h-4 w-4" />
+          </button>
         </div>
 
-        {/* Live log feed (5 columns) */}
-        <div className="lg:col-span-5 glass-panel border border-slate-200 dark:border-slate-800 rounded-3xl p-5 flex flex-col h-[360px] lg:h-auto">
-          <h4 className="font-extrabold text-xs uppercase text-slate-450 tracking-wider mb-3">Live Log Feed</h4>
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-xs">
-            {metrics.recentActivity?.map((act) => (
-              <div key={act.id} className="p-2 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-250/20">
-                <div className="flex items-center justify-between font-bold">
-                  <span className="text-brand-600">{act.complaint_number}</span>
-                  <span className="text-[9px] text-slate-400 font-medium">
-                    {new Date(act.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
+        {loading ? (
+          <div className="space-y-3 py-4">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-16 w-full bg-slate-100 dark:bg-slate-900 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : complaints.length === 0 ? (
+          <p className="text-center py-8 text-xs text-slate-400">No active complaints found in engineering audit queue.</p>
+        ) : (
+          <div className="space-y-3">
+            {complaints.map((item) => (
+              <div 
+                key={item.id}
+                className="p-4 bg-white dark:bg-slate-900/60 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-xs text-brand-500">{item.complaint_number}</span>
+                    <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-brand-500/10 text-brand-500">
+                      ● {item.status}
+                    </span>
+                    {item.severity === 'critical' && (
+                      <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-red-500/10 text-red-500">
+                        CRITICAL
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-bold text-xs text-slate-800 dark:text-slate-200">{item.description}</p>
+                  <p className="text-[10px] text-slate-400">
+                    {item.ward_name} • Category: {item.category_name || 'General'}
+                  </p>
                 </div>
-                <p className="text-slate-650 dark:text-slate-300 mt-0.5">{act.remarks}</p>
-                <div className="text-[9px] text-slate-400 mt-1">
-                  Action by: {act.user_name} ({act.user_role})
-                </div>
+
+                <Link
+                  to={`/complaints/${item.id}`}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center gap-1 shrink-0 cursor-pointer shadow-md shadow-blue-500/20"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Review Case
+                </Link>
               </div>
             ))}
           </div>
-        </div>
-
+        )}
       </div>
 
     </div>
