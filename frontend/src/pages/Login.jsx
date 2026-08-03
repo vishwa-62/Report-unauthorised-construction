@@ -76,11 +76,11 @@ const Login = () => {
 
         {/* ACCOUNT TYPE SELECTOR TABS */}
         <div className="space-y-1.5 mb-6 text-xs">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+          <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
             <Sparkles className="h-3.5 w-3.5 text-brand-500" />
             Select Account Role (Quick Auto-Fill)
           </label>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800/80">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800">
             {[
               { id: 'citizen', label: 'Citizen' },
               { id: 'officer', label: 'Inspector' },
@@ -91,10 +91,10 @@ const Login = () => {
                 key={role.id}
                 type="button"
                 onClick={() => handleRoleSelect(role.id)}
-                className={`py-2 px-1.5 rounded-xl font-bold uppercase text-[9px] tracking-wider transition-all cursor-pointer ${
+                className={`py-2 px-1.5 rounded-xl font-bold uppercase text-[10px] tracking-wider transition-all cursor-pointer ${
                   selectedRole === role.id 
-                    ? 'bg-brand-500 text-white shadow shadow-brand-500/15' 
-                    : 'text-slate-450 hover:text-slate-200'
+                    ? 'bg-brand-500 text-white shadow-md shadow-brand-500/20' 
+                    : 'text-slate-300 hover:text-white bg-slate-800/40 hover:bg-slate-800'
                 }`}
               >
                 {role.label}
@@ -104,7 +104,7 @@ const Login = () => {
         </div>
 
         {error && (
-          <div className="p-3 mb-5 text-xs font-semibold bg-red-950/30 border border-red-500/30 text-red-400 rounded-2xl">
+          <div className="p-3 mb-5 text-xs font-semibold bg-red-950/40 border border-red-500/40 text-red-300 rounded-2xl">
             ⚠️ {error}
           </div>
         )}
@@ -112,37 +112,37 @@ const Login = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Email field */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Email Address</label>
+            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="email"
                 required
                 placeholder="citizen@cityguard.gov"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-850 text-white placeholder-slate-550 rounded-xl outline-none focus:border-brand-500/50 text-sm"
+                className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-750 text-white placeholder-slate-400 rounded-xl outline-none focus:border-brand-500 text-sm"
               />
             </div>
           </div>
 
           {/* Password field */}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold text-slate-455 uppercase tracking-wider">Password</label>
+            <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type={showPassword ? 'text' : 'password'}
                 required
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-10 pr-10 py-3 bg-slate-900 border border-slate-850 text-white placeholder-slate-550 rounded-xl outline-none focus:border-brand-500/50 text-sm"
+                className="w-full pl-10 pr-10 py-3 bg-slate-900 border border-slate-750 text-white placeholder-slate-400 rounded-xl outline-none focus:border-brand-500 text-sm"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-550 hover:text-slate-350"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
@@ -153,7 +153,7 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+            className="w-full py-3.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 cursor-pointer"
           >
             {loading ? (
               <>
@@ -164,8 +164,8 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-xs text-slate-400 border-t border-slate-800/60 pt-5 flex items-center justify-between">
-          <Link to="/" className="text-slate-500 hover:text-slate-350 font-bold hover:underline">
+        <div className="mt-6 text-center text-xs text-slate-300 border-t border-slate-800/60 pt-5 flex items-center justify-between">
+          <Link to="/" className="text-slate-400 hover:text-white font-bold hover:underline">
             ← Back to Home
           </Link>
           <div>

@@ -113,9 +113,9 @@ const Register = () => {
           /* REGISTRATION FORM */
           <form onSubmit={handleRegisterSubmit} className="space-y-4">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Full Name</label>
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Full Name</label>
               <div className="relative">
-                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <User className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   type="text"
                   name="full_name"
@@ -123,15 +123,15 @@ const Register = () => {
                   placeholder="John Doe"
                   value={formData.full_name}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-850 text-white placeholder-slate-550 rounded-xl outline-none focus:border-brand-500/50 text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-750 text-white placeholder-slate-400 rounded-xl outline-none focus:border-brand-500 text-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Email Address</label>
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Email Address</label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   type="email"
                   name="email"
@@ -139,30 +139,30 @@ const Register = () => {
                   placeholder="john@example.com"
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-850 text-white placeholder-slate-550 rounded-xl outline-none focus:border-brand-500/50 text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-750 text-white placeholder-slate-400 rounded-xl outline-none focus:border-brand-500 text-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Phone Number</label>
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Phone Number</label>
               <div className="relative">
-                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   type="tel"
                   name="phone_number"
                   placeholder="+91 99999 88888"
                   value={formData.phone_number}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-850 text-white placeholder-slate-550 rounded-xl outline-none focus:border-brand-500/50 text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-750 text-white placeholder-slate-400 rounded-xl outline-none focus:border-brand-500 text-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-slate-450 uppercase tracking-wider">Password</label>
+              <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Password</label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   type="password"
                   name="password"
@@ -170,7 +170,7 @@ const Register = () => {
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-850 text-white placeholder-slate-550 rounded-xl outline-none focus:border-brand-500/50 text-sm"
+                  className="w-full pl-10 pr-4 py-3 bg-slate-900 border border-slate-750 text-white placeholder-slate-400 rounded-xl outline-none focus:border-brand-500 text-sm"
                 />
               </div>
             </div>
