@@ -1,15 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
+import { getStoredComplaints } from '../utils/mockStore';
 import { 
   Shield, Sparkles, Map, ClipboardCheck, ArrowRight, Eye, ShieldAlert,
-  ChevronDown, ChevronUp, HelpCircle, FileText, Camera, Send, Clock
+  ChevronDown, ChevronUp, HelpCircle, FileText, Camera, Send, Clock,
+  MapPin, Search, Filter, Cpu, AlertTriangle, CheckCircle, RefreshCcw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Home = () => {
   const { token, user } = useAuth();
   const [activeFaq, setActiveFaq] = useState(null);
+  const [complaints, setComplaints] = useState([]);
+  const [loadingComplaints, setLoadingComplaints] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  useEffect(() => {
+    const fetchComplaints = async () => {
+      try {
+        setLoadingComplaints(true);
+        const res = await axios.get('/complaints');
+        if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+          setComplaints(res.data);
+        } else {
+          setComplaints(getStoredComplaints());
+        }
+      } catch (err) {
+        setComplaints(getStoredComplaints());
+      } finally {
+        setLoadingComplaints(false);
+      }
+    };
+    fetchComplaints();
+  }, []);
 
   const stats = [
     { value: '1,420+', label: 'Violations Tracked' },
@@ -82,6 +108,33 @@ const Home = () => {
     setActiveFaq(activeFaq === idx ? null : idx);
   };
 
+  const getStatusBadge = (status) => {
+    const s = (status || 'pending').toLowerCase();
+    if (s === 'resolved') {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1"><CheckCircle className="h-3 w-3" /> Resolved</span>;
+    }
+    if (s === 'rejected') {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1"><AlertTriangle className="h-3 w-3" /> Rejected</span>;
+    }
+    if (s === 'under_review' || s === 'inspected') {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30 flex items-center gap-1"><Eye className="h-3 w-3" /> In Review</span>;
+    }
+    if (s === 'assigned') {
+      return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1"><Clock className="h-3 w-3" /> Assigned</span>;
+    }
+    return <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 flex items-center gap-1"><RefreshCcw className="h-3 w-3" /> Pending</span>;
+  };
+
+  const categories = ['All', 'Illegal Floor Construction', 'Footpath Encroachment', 'Drainage Block Encroachment', 'Unauthorized Commercial Shed', 'Setback Violation'];
+
+  const filteredComplaints = complaints.filter(c => {
+    const matchesSearch = (c.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (c.address || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          (c.complaint_number || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCat = selectedCategory === 'All' || c.category_name === selectedCategory;
+    return matchesSearch && matchesCat;
+  });
+
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden font-sans">
       
@@ -138,7 +191,7 @@ const Home = () => {
           className="text-4xl sm:text-6xl font-black leading-tight sm:leading-none text-white tracking-tight"
         >
           Online Monitoring of <br />
-          <span className="bg-gradient-to-r from-brand-450 to-emerald-400 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-emerald-400 via-brand-450 to-green-300 bg-clip-text text-transparent font-black drop-shadow-md inline-block">
             Unauthorized Construction
           </span>
         </motion.h1>
@@ -175,7 +228,98 @@ const Home = () => {
         </motion.div>
       </section>
 
-      {/* 3. Visual Dashboard Preview Card */}
+      {/* 3. Live Reported Unauthorized Construction Violations Feed */}
+      <section className="relative z-10 max-w-6xl mx-auto px-6 py-10">
+        <div className="p-6 bg-slate-900/90 border border-white/10 rounded-3xl space-y-6 shadow-2xl backdrop-blur-md">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <ShieldAlert className="h-5 w-5 text-brand-450" />
+                <h2 className="text-xl font-black text-white tracking-tight">Active Unauthorized Construction Reports</h2>
+              </div>
+              <p className="text-xs text-slate-400">Live monitoring of flagged site violations and citizen complaint status</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="Search violations..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 pr-3 py-1.5 bg-slate-950 border border-white/10 rounded-xl text-xs text-white placeholder-slate-500 outline-none focus:border-brand-500"
+                />
+              </div>
+              <Link 
+                to={token ? '/citizen/new-complaint' : '/login'} 
+                className="px-4 py-2 bg-brand-500 hover:bg-brand-600 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-1 shadow-md shadow-brand-500/20"
+              >
+                Report New Violation
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 text-xs scrollbar-none">
+            {categories.map((cat, idx) => (
+              <button
+                key={idx}
+                onClick={() => setSelectedCategory(cat)}
+                className={`px-3 py-1.5 rounded-xl font-semibold transition-all whitespace-nowrap cursor-pointer text-[11px] ${
+                  selectedCategory === cat
+                    ? 'bg-brand-500 text-white font-bold shadow'
+                    : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Violations Cards Grid */}
+          {filteredComplaints.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              No matching unauthorized construction reports found.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredComplaints.slice(0, 6).map((item) => (
+                <div 
+                  key={item.id} 
+                  className="p-4 bg-slate-950/70 border border-white/10 rounded-2xl space-y-3 hover:border-brand-500/40 transition-all flex flex-col justify-between"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-[11px]">
+                      <span className="font-extrabold text-brand-450">{item.complaint_number}</span>
+                      {getStatusBadge(item.status)}
+                    </div>
+                    <h3 className="font-extrabold text-xs text-white line-clamp-1">{item.category_name}</h3>
+                    <p className="text-[11px] text-slate-300 line-clamp-2 leading-relaxed">{item.description}</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-white/5 space-y-2 text-[10px] text-slate-400">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-brand-450 shrink-0" />
+                      <span className="truncate">{item.address}</span>
+                    </div>
+                    {item.ai_predicted_label && (
+                      <div className="flex items-center justify-between bg-white/5 px-2.5 py-1 rounded-lg border border-white/5">
+                        <span className="flex items-center gap-1 font-semibold text-slate-300">
+                          <Cpu className="h-3 w-3 text-brand-450" /> AI Detection:
+                        </span>
+                        <span className="text-brand-400 font-bold">{item.ai_confidence}%</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* 4. Visual Dashboard Preview Card */}
       <section className="relative z-10 max-w-6xl mx-auto px-6 pb-16">
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
@@ -213,7 +357,7 @@ const Home = () => {
         </motion.div>
       </section>
 
-      {/* 4. Stats Counter Grid */}
+      {/* 5. Stats Counter Grid */}
       <section className="relative z-10 max-w-7xl mx-auto px-6 py-12 border-t border-b border-white/5">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {stats.map((s, i) => (
@@ -225,7 +369,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 5. Features Grid Layout */}
+      {/* 6. Features Grid Layout */}
       <section className="relative z-10 max-w-6xl mx-auto px-6 py-16">
         <div className="text-center max-w-xl mx-auto space-y-2 mb-12">
           <h2 className="text-2xl font-black tracking-tight">Full Operations Lifecycle</h2>
@@ -248,7 +392,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* NEW FEATURE: 6. How It Works Progression Road */}
+      {/* 7. How It Works Progression Road */}
       <section className="relative z-10 max-w-6xl mx-auto px-6 py-16 border-t border-white/5">
         <div className="text-center max-w-xl mx-auto space-y-2 mb-12">
           <h2 className="text-2xl font-black tracking-tight">How It Works</h2>
@@ -271,7 +415,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* NEW FEATURE: 7. Frequently Asked Questions (Interactive Accordion) */}
+      {/* 8. Frequently Asked Questions */}
       <section className="relative z-10 max-w-4xl mx-auto px-6 py-16 border-t border-white/5">
         <div className="text-center space-y-2 mb-12">
           <h2 className="text-2xl font-black tracking-tight flex items-center justify-center gap-2">
@@ -316,7 +460,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* 8. Footer */}
+      {/* 9. Footer */}
       <footer className="relative z-10 border-t border-white/5 py-8 text-center text-xs text-slate-500">
         © 2026 CityGuard AI. Smart City Management Platform. All rights reserved.
       </footer>
